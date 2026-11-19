@@ -17,7 +17,8 @@ if a.elenco or not a.file:
         for m in b["modelli"]:
             print(f"    {m['id']}: {m['nome']}")
     raise SystemExit
-data, name, _ = convert(Path(a.file).read_text(encoding="utf-8-sig"), a.marchio, a.modello, a.formato)
+data, name, _ = convert(Path(a.file).read_text(encoding="utf-8-sig"), a.marchio, a.modello, a.formato,
+                        nome_base=Path(a.file).name)
 out = Path(a.out) / name
 out.write_bytes(data)
 print(out)

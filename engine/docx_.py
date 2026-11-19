@@ -153,8 +153,10 @@ class _Builder:
         mt, mr, mb, ml = self.m["margini_mm"]
         sec = d.sections[0]
         sec.page_width, sec.page_height = Mm(210), Mm(297)
+        s = self.p["margine_sicurezza_mm"]
+        mt = max(mt, s + self.p["logo_altezza_mm"] + 8)
         sec.top_margin, sec.right_margin, sec.bottom_margin, sec.left_margin = Mm(mt), Mm(mr), Mm(mb), Mm(ml)
-        sec.header_distance, sec.footer_distance = Mm(10), Mm(10)
+        sec.header_distance, sec.footer_distance = Mm(s), Mm(10)
         st = d.styles
         _set_font(st["Normal"], f["testo"], self.body_pt, color=c["testo"])
         st["Normal"].paragraph_format.space_after = Pt(6)

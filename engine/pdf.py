@@ -42,6 +42,9 @@ def _slug(s):
 def _css(prof):
     c, f, m = prof["colori"], prof["font"], prof["modello"]["pdf"]
     mt, mr, mb, ml = m["margini_mm"]
+    s = prof["margine_sicurezza_mm"]
+    # il margine superiore deve contenere: distanza dal bordo + logo + riga e spazio sotto
+    mt = max(mt, s + prof["logo_altezza_mm"] + 10)
     return f"""
 @page {{
   size: {m['dimensione']};
@@ -56,7 +59,7 @@ def _css(prof):
 }}
 html {{ font-family: '{f['testo']}', 'Liberation Sans', 'DejaVu Sans', sans-serif;
         font-size: {m['corpo_pt']}pt; color: {c['testo']}; line-height: {m['interlinea']}; }}
-#hdr {{ position: running(hdr); border-bottom: 1.2pt solid {c['primario']}; padding-bottom: 3mm;
+#hdr {{ position: running(hdr); border-bottom: 1.2pt solid {c['primario']}; padding-top: {s}mm; padding-bottom: 3mm;
         display: flex; justify-content: space-between; align-items: flex-end; }}
 #hdr img {{ height: {prof['logo_altezza_mm']}mm; }}
 #hdr .brand {{ font: 8pt '{f['testo']}', sans-serif; color: {c['tenue']}; text-align: right; }}
@@ -100,7 +103,7 @@ img {{ max-width: 100%; }}
 /* copertina */
 .cover {{ page: cover; break-after: page; height: 297mm; position: relative; }}
 .cover .band {{ position: absolute; left: 0; top: 0; bottom: 0; width: 18mm; background: {c['primario']}; }}
-.cover .inner {{ position: absolute; left: 38mm; right: 22mm; top: 36mm; }}
+.cover .inner {{ position: absolute; left: 38mm; right: 22mm; top: {max(36, s)}mm; }}
 .cover img.logo {{ height: {prof['logo_altezza_mm'] * 1.6}mm; margin-bottom: 70mm; }}
 .cover .kind {{ font: 600 10pt '{f['testo']}', sans-serif; letter-spacing: .15em;
                 text-transform: uppercase; color: {c['secondario']}; }}

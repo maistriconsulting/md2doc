@@ -13,6 +13,9 @@ import copy
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
+MARGINE_SICUREZZA_MIN = 5      # mm: distanza minima del logo dal bordo superiore
+MARGINE_SICUREZZA_DEFAULT = 8
+MARGINE_SICUREZZA_MAX = 20
 TEMPLATES_DIR = ROOT / "templates"
 
 DEFAULT_MODEL = {
@@ -34,6 +37,15 @@ def _deep_merge(base, over):
         else:
             out[k] = v
     return out
+
+
+def margine_sicurezza(v):
+    """Distanza del logo dal bordo superiore: mai sotto il minimo, anche se il file dice altrimenti."""
+    try:
+        n = float(v)
+    except (TypeError, ValueError):
+        n = MARGINE_SICUREZZA_DEFAULT
+    return min(max(n, MARGINE_SICUREZZA_MIN), MARGINE_SICUREZZA_MAX)
 
 
 def list_brands():
@@ -77,6 +89,7 @@ def load_profile(brand_id, model_id):
                             _deep_merge(cfg.get("font") or {}, model.pop("font", {}))),
         "logo": cfg.get("logo"),
         "logo_altezza_mm": cfg.get("logo_altezza_mm", 12),
+        "margine_sicurezza_mm": margine_sicurezza(cfg.get("margine_sicurezza_mm")),
         "footer": model.pop("footer", cfg.get("footer", "")),
         "lingua": cfg.get("lingua", "it"),
         "modello": model,

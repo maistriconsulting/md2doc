@@ -127,6 +127,7 @@ class _Deck:
     def logo(self, slide, x, y, h):
         lp = self.p["logo_path"]
         if lp:
+            y = max(y, self.p["margine_sicurezza_mm"] / 25.4)    # mai a contatto con il bordo superiore
             slide.shapes.add_picture(str(lp), Inches(x), Inches(y), height=Inches(h))
 
     # ---------- slide speciali ----------

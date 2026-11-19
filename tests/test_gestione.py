@@ -121,5 +121,28 @@ def test_rotte_protette(tpl):
     r = c.post("/api/brand", json={"nome": "Alfa"}, headers={**ok, "Origin": base}, base_url=base)
     assert r.status_code == 200 and r.get_json()["id"] == "alfa"
     assert c.get("/api/brand/alfa", base_url=base).status_code == 200
-    assert c.get("/api/brand/alfa/prova?model=proposta", base_url=base).data[:5] == b"%PDF-"
+    url = c.get("/api/brand/alfa/prova?model=proposta", base_url=base).get_json()["url"]
+    assert c.get(url, base_url=base).data[:5] == b"%PDF-"
     assert c.get("/api/brand/..%2fx", base_url=base).status_code in (400, 404)
+
+
+def test_marchio_di_esempio_in_sola_lettura(monkeypatch):
+    """Nel repository vero il marchio di esempio non si modifica dall'app (niente dati reali su GitHub)."""
+    from engine.config import ROOT
+    monkeypatch.setattr(gestione, "TEMPLATES_DIR", ROOT / "templates")
+    assert gestione.leggi_marchio("esempio-cliente")["sola_lettura"] is True
+    prima = (ROOT / "templates" / "esempio-cliente" / "brand.yaml").read_bytes()
+    with pytest.raises(gestione.ErroreGestione):
+        gestione.salva_marchio("esempio-cliente", gestione.leggi_marchio("esempio-cliente"))
+    with pytest.raises(gestione.ErroreGestione):
+        gestione.salva_logo("esempio-cliente", png())
+    assert (ROOT / "templates" / "esempio-cliente" / "brand.yaml").read_bytes() == prima
+
+
+def test_marchio_di_esempio_contiene_solo_dati_fittizi():
+    import re
+    from engine.config import ROOT
+    t = (ROOT / "templates" / "esempio-cliente" / "brand.yaml").read_text(encoding="utf-8")
+    assert not re.search(r"[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]", t)     # codice fiscale
+    assert not re.search(r"@", t)                                           # email
+    assert not re.search(r"piva:\s*\"?(?!0{11}\b)\d{11}", t)                 # partita IVA diversa da quella fittizia

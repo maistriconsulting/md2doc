@@ -67,6 +67,7 @@
   #imp-msg { font-size:13.5px; }
   #imp-msg.err { color:#b42318; }
   #imp-msg.ok { color:#1a7f37; }
+  .avviso { background:#FFF4E5; border:1px solid #F5C77E; color:#7A4B00; border-radius:6px; padding:10px 12px; font-size:13.5px; margin-bottom:14px; }
   .sporco { color:#b54708; font-size:13px; font-weight:600; }
 </style>
 </head>
@@ -142,6 +143,7 @@
 <script>
 const $ = id => document.getElementById(id);
 let BR = [];
+let NOME_FILE = '';   // nome del file .md caricato: serve a dare il nome al documento generato
 
 async function init() {
   BR = await (await fetch('/api/brands')).json();
@@ -164,7 +166,8 @@ function showDesc() {
 }
 $('brand').onchange = fillModels;
 $('model').onchange = showDesc;
-$('file').onchange = async e => { const f = e.target.files[0]; if (f) $('md').value = await f.text(); };
+$('file').onchange = async e => { const f = e.target.files[0]; if (f) { $('md').value = await f.text(); NOME_FILE = f.name; } };
+$('md').oninput = () => { if (!$('md').value.trim()) NOME_FILE = ''; };
 
 function msg(t, err) { $('msg').textContent = t; $('msg').className = err ? 'err' : ''; }
 
@@ -174,19 +177,20 @@ async function run(fmt, inline) {
   fd.append('brand', $('brand').value);
   fd.append('model', $('model').value);
   fd.append('format', fmt);
+  if (NOME_FILE) fd.append('filename', NOME_FILE);
   if (inline) fd.append('inline', '1');
   $('go').disabled = $('prev').disabled = true; msg('Elaborazione in corso...');
   try {
     const r = await fetch('/api/convert', { method: 'POST', body: fd });
     if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || 'Errore sconosciuto'); }
-    const blob = await r.blob();
-    const name = (r.headers.get('Content-Disposition') || '').match(/filename\*?=(?:UTF-8'')?"?([^";]+)/i);
-    const url = URL.createObjectURL(blob);
-    if (inline) { $('frame').src = url; msg('Anteprima aggiornata.'); }
+    if (inline) { $('frame').src = (await r.json()).url; msg('Anteprima aggiornata.'); }
     else {
-      const a = document.createElement('a'); a.href = url; a.download = name ? decodeURIComponent(name[1]) : 'documento.' + fmt;
-      a.click(); msg('Fatto: file scaricato.');
-      if (fmt === 'pdf') $('frame').src = url;
+      const blob = await r.blob();
+      const name = (r.headers.get('Content-Disposition') || '').match(/filename\*?=(?:UTF-8'')?"?([^";]+)/i);
+      const url = URL.createObjectURL(blob);
+      const nome = name ? decodeURIComponent(name[1]) : 'documento.' + fmt;
+      const a = document.createElement('a'); a.href = url; a.download = nome;
+      a.click(); msg('Fatto: scaricato ' + nome);
     }
   } catch (e) { msg(e.message, true); }
   finally { $('go').disabled = $('prev').disabled = false; }
@@ -278,9 +282,9 @@ function htmlModello(id, m) {
 }
 
 function disegna() {
-  const b = CUR, m = b.marchio, c = b.colori, f = b.font;
+  const b = CUR, ro = !!b.sola_lettura, m = b.marchio, c = b.colori, f = b.font;
   const logoUrl = b.logo_presente ? `/api/brand/${encodeURIComponent(b.id)}/logo?t=${Date.now()}` : '';
-  $('imp-editor').innerHTML = `
+  $('imp-editor').innerHTML = (ro ? `<div class="avviso"><b>Marchio di esempio, sola lettura.</b> Fa parte del programma pubblicato su GitHub: non inserirci dati reali. Per usare i tuoi dati crea un nuovo marchio con il modulo a sinistra (campo "Parti da": questo).</div>` : '') + `
     <h2 class="sez">Identità</h2>
     <div class="g2">${campo('Nome del marchio', 'f-nome', m.nome)}${campo('Ragione sociale', 'f-rs', m.ragione_sociale)}</div>
     ${campo('Indirizzo', 'f-ind', m.indirizzo)}
@@ -292,7 +296,9 @@ function disegna() {
       ${logoUrl ? `<img src="${logoUrl}" alt="Logo">` : '<span class="hint">Nessun logo caricato.</span>'}
       <div><input type="file" id="f-logo" accept="image/png,image/jpeg"><div class="hint">PNG o JPG, massimo 3 MB. Si salva subito.</div></div>
       <div style="width:150px">${num('Altezza nel documento (mm)', 'f-logoh', b.logo_altezza_mm, '1').replace('class="f-logoh"', 'id="f-logoh"')}</div>
+      <div style="width:190px">${num('Distanza dal bordo superiore (mm)', 'f-sic', b.margine_sicurezza_mm, '1').replace('class="f-sic"', `id="f-sic" min="${b.margine_sicurezza_min}" max="${b.margine_sicurezza_max}"`)}</div>
     </div>
+    <p class="hint">Il logo non tocca mai il bordo superiore: minimo ${b.margine_sicurezza_min} mm, massimo ${b.margine_sicurezza_max} mm. Il margine alto delle pagine si adatta da solo se serve più spazio.</p>
 
     <h2 class="sez">Colori e font</h2>
     <div class="g5">${colore('Primario', 'primario', c.primario)}${colore('Secondario', 'secondario', c.secondario)}${colore('Testo', 'testo', c.testo)}${colore('Tenue', 'tenue', c.tenue)}${colore('Sfondo chiaro', 'sfondo_chiaro', c.sfondo_chiaro)}</div>
@@ -312,6 +318,10 @@ function disegna() {
     </div>
     <iframe id="imp-frame" title="Anteprima di prova" style="margin-top:14px;display:none"></iframe>`;
   collega();
+  if (ro) {
+    $('imp-editor').querySelectorAll('input, select, #imp-salva, #imp-prova, #imp-del, [data-az], #nm-add').forEach(el => el.disabled = true);
+    $('imp-prova').disabled = false; $('imp-prova').textContent = 'Anteprima'; $('imp-prova-mod').disabled = false;
+  }
 }
 
 function collega() {
@@ -338,7 +348,7 @@ function raccogli() {
   const v = id => $(id).value;
   const d = {
     marchio: { nome: v('f-nome'), ragione_sociale: v('f-rs'), indirizzo: v('f-ind'), piva: v('f-piva'), cf: v('f-cf'), rea: v('f-rea') },
-    footer: v('f-foot'), logo_altezza_mm: v('f-logoh'),
+    footer: v('f-foot'), logo_altezza_mm: v('f-logoh'), margine_sicurezza_mm: v('f-sic'),
     colori: {}, font: { titoli: v('f-ft'), testo: v('f-fx'), monospazio: v('f-fm') }, modelli: {},
   };
   document.querySelectorAll('[data-colt]').forEach(t => d.colori[t.dataset.colt] = t.value.trim());
@@ -357,6 +367,7 @@ function raccogli() {
 }
 
 async function salva(conAnteprima) {
+  if (CUR.sola_lettura) return soloAnteprima();
   impMsg('Salvataggio...');
   try {
     const sel = conAnteprima ? $('imp-prova-mod').value : null;
@@ -368,10 +379,19 @@ async function salva(conAnteprima) {
       impMsg('Salvato. Creo l\'anteprima...', 'ok');
       const r = await api(`/api/brand/${encodeURIComponent(CUR.id)}/prova?model=${encodeURIComponent($('imp-prova-mod').value)}`);
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Anteprima non riuscita');
-      const fr = $('imp-frame'); fr.style.display = 'block'; fr.src = URL.createObjectURL(await r.blob());
+      const fr = $('imp-frame'); fr.style.display = 'block'; fr.src = (await r.json()).url;
       impMsg('Salvato. Anteprima aggiornata.', 'ok');
     }
     aggiornaLista();
+  } catch (e) { impMsg(e.message, 'err'); }
+}
+
+async function soloAnteprima() {
+  impMsg('Creo l\'anteprima...');
+  try {
+    const r = await api(`/api/brand/${encodeURIComponent(CUR.id)}/prova?model=${encodeURIComponent($('imp-prova-mod').value)}`);
+    if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Anteprima non riuscita');
+    const fr = $('imp-frame'); fr.style.display = 'block'; fr.src = (await r.json()).url; impMsg('Anteprima aggiornata.', 'ok');
   } catch (e) { impMsg(e.message, 'err'); }
 }
 
@@ -383,7 +403,7 @@ async function caricaLogo(e) {
     await ok(await api(`/api/brand/${encodeURIComponent(CUR.id)}/logo`, { method: 'POST', body: fd }));
     const tieni = SPORCO ? raccogli() : null;
     CUR = await ok(await api('/api/brand/' + encodeURIComponent(CUR.id)));
-    if (tieni) { Object.assign(CUR, { marchio: tieni.marchio, footer: tieni.footer, colori: tieni.colori, font: tieni.font }); }
+    if (tieni) { Object.assign(CUR, { marchio: tieni.marchio, footer: tieni.footer, colori: tieni.colori, font: tieni.font, margine_sicurezza_mm: tieni.margine_sicurezza_mm }); }
     disegna(); if (tieni) segnaSporco(); impMsg('Logo salvato.', 'ok');
   } catch (er) { impMsg(er.message, 'err'); e.target.value = ''; }
 }
@@ -414,7 +434,7 @@ function eliminaModello(id) {
 function rimpiazza(dati) {
   const base = JSON.parse(JSON.stringify(CUR));
   const completa = m => ({ copertina: false, descrizione: '', pdf: {}, docx: {}, pptx: {}, ...m });
-  CUR = { ...base, marchio: dati.marchio, footer: dati.footer, logo_altezza_mm: dati.logo_altezza_mm, colori: dati.colori, font: dati.font,
+  CUR = { ...base, marchio: dati.marchio, footer: dati.footer, logo_altezza_mm: dati.logo_altezza_mm, margine_sicurezza_mm: dati.margine_sicurezza_mm, colori: dati.colori, font: dati.font,
           modelli: Object.fromEntries(Object.entries(dati.modelli).map(([k, m]) => [k, completa(m)])) };
   disegna(); segnaSporco();
 }

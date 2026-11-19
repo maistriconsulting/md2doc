@@ -12,7 +12,8 @@ from pathlib import Path
 import yaml
 from PIL import Image
 
-from .config import DEFAULT_MODEL, TEMPLATES_DIR, _deep_merge
+from .config import (ROOT, DEFAULT_MODEL, MARGINE_SICUREZZA_DEFAULT, MARGINE_SICUREZZA_MAX,
+                     MARGINE_SICUREZZA_MIN, TEMPLATES_DIR, _deep_merge, margine_sicurezza)
 
 CESTINO = TEMPLATES_DIR / "_eliminati"
 MODELLO_BASE_DA = "esempio-cliente"
@@ -20,6 +21,17 @@ DIMENSIONI_PAGINA = ["A4", "A3", "A5", "Letter", "Legal"]
 RE_ID = re.compile(r"^[a-z0-9][a-z0-9-]{0,39}$")
 RE_COLORE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 MAX_LOGO = 3 * 1024 * 1024
+
+
+def sola_lettura(brand_id):
+    """Il marchio di esempio e' nel repository pubblico: non va riempito con dati reali."""
+    return brand_id == MODELLO_BASE_DA and TEMPLATES_DIR.resolve() == (ROOT / "templates").resolve()
+
+
+def _blocca_se_sola_lettura(brand_id):
+    if sola_lettura(brand_id):
+        raise ErroreGestione("Il marchio di esempio fa parte del repository pubblico e non si modifica: "
+                             "crea un nuovo marchio (partendo da questo) e inserisci lì i dati reali.")
 
 
 class ErroreGestione(ValueError):
@@ -72,11 +84,15 @@ def leggi_marchio(brand_id):
         modelli[mid] = _deep_merge(DEFAULT_MODEL, m or {})
     return {
         "id": brand_id,
+        "sola_lettura": sola_lettura(brand_id),
         "marchio": {k: str((cfg.get("marchio") or {}).get(k, "") or "")
                     for k in ("nome", "ragione_sociale", "indirizzo", "piva", "cf", "rea")},
         "logo": logo,
         "logo_presente": bool(logo) and (d / logo).exists(),
         "logo_altezza_mm": cfg.get("logo_altezza_mm", 12),
+        "margine_sicurezza_mm": margine_sicurezza(cfg.get("margine_sicurezza_mm")),
+        "margine_sicurezza_min": MARGINE_SICUREZZA_MIN,
+        "margine_sicurezza_max": MARGINE_SICUREZZA_MAX,
         "colori": _deep_merge({"primario": "#1F3A5F", "secondario": "#5B7FA6", "testo": "#222222",
                                "tenue": "#6B7280", "sfondo_chiaro": "#F2F4F7"}, cfg.get("colori") or {}),
         "font": _deep_merge({"titoli": "Arial", "testo": "Arial", "monospazio": "Courier New"},
@@ -149,6 +165,7 @@ def _modello(mid, m):
 
 def salva_marchio(brand_id, dati):
     d = _cartella(brand_id)
+    _blocca_se_sola_lettura(brand_id)
     cfg = _leggi_yaml(d)          # si conservano le chiavi che l'interfaccia non conosce
     if not isinstance(dati, dict):
         raise ErroreGestione("Dati non validi.")
@@ -163,6 +180,8 @@ def salva_marchio(brand_id, dati):
         "rea": _testo(mar.get("rea"), "REA", 30),
     })
     cfg["logo_altezza_mm"] = _numero(dati.get("logo_altezza_mm", 12), "Altezza logo", 4, 40)
+    cfg["margine_sicurezza_mm"] = _numero(dati.get("margine_sicurezza_mm", MARGINE_SICUREZZA_DEFAULT),
+                                          "Distanza del logo dal bordo superiore", MARGINE_SICUREZZA_MIN, MARGINE_SICUREZZA_MAX)
 
     colori = dati.get("colori") or {}
     cfg["colori"] = {}
@@ -218,6 +237,7 @@ def crea_marchio(nome, copia_da=None):
 
 def salva_logo(brand_id, contenuto):
     d = _cartella(brand_id)
+    _blocca_se_sola_lettura(brand_id)
     cfg = _leggi_yaml(d)
     if len(contenuto) > MAX_LOGO:
         raise ErroreGestione("Il logo supera i 3 MB.")
