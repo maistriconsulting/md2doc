@@ -9,6 +9,10 @@ Trasforma i file markdown (anche quelli generati da un'intelligenza artificiale)
 
 Alla prima esecuzione installa le librerie (serve Python 3.10 o superiore). Su Mac serve anche Pango per il PDF: `brew install pango`. Poi si apre `http://127.0.0.1:5055`: scegli marchio, modello e formato, incolla il markdown, scarica il file. Raggiungibile solo dal tuo computer.
 
+### Icona su Mac
+
+`./mac/crea-app.sh` crea "MD in documento.app" in `~/Applications`: doppio clic, parte il programma e si apre il browser (si trova anche con Spotlight). Se sposti la cartella del progetto, rilancia lo script. Per fermare il programma: `pkill -f app.py`. Il registro e' in `~/Library/Logs/md2doc.log`.
+
 Da terminale: `python cli.py file.md --marchio mio-marchio --modello documento --formato pdf` (con `--elenco` mostra marchi e modelli).
 
 ## Test
