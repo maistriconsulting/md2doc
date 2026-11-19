@@ -1,0 +1,40 @@
+# MARCHIO DI ESEMPIO: copiare questa cartella per aggiungere un nuovo marchio.
+marchio:
+  nome: Cliente Esempio Srl
+  ragione_sociale: Cliente Esempio Srl
+  indirizzo: Via Esempio 1, 00000 Citta (XX)
+  piva: "00000000000"
+  cf: ""
+  rea: ""
+
+logo: logo.png
+logo_altezza_mm: 11
+
+colori:
+  primario: "#A62626"
+  secondario: "#D9822B"
+  testo: "#1F1F1F"
+  tenue: "#6B7280"
+  sfondo_chiaro: "#F7F1EE"
+
+font:
+  titoli: Georgia
+  testo: Arial
+  monospazio: Courier New
+
+footer: "Cliente Esempio Srl | Documento riservato"
+
+modelli:
+  lettera:
+    nome: Lettera / Nota
+    descrizione: Impaginazione compatta
+    pdf:
+      corpo_pt: 10.5
+      margini_mm: [30, 25, 25, 25]
+  proposta:
+    nome: Proposta con copertina
+    copertina: true
+  presentazione:
+    nome: Presentazione
+    pptx:
+      corpo_pt: 20

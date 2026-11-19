@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MD in documento</title>
+<style>
+  :root { --p:#1F3A5F; --s:#5B7FA6; --bg:#F2F4F7; --line:#d6dae0; --t:#222; --m:#6B7280; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.45 Arial, Helvetica, sans-serif; color:var(--t); background:var(--bg); }
+  header { background:var(--p); color:#fff; padding:14px 24px; }
+  header h1 { margin:0; font-size:18px; font-weight:600; }
+  header p { margin:2px 0 0; font-size:12.5px; opacity:.8; }
+  main { display:grid; grid-template-columns: 1fr 1fr; gap:18px; padding:18px 24px; max-width:1400px; margin:0 auto; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .card { background:#fff; border:1px solid var(--line); border-radius:8px; padding:16px; }
+  label { display:block; font-size:12px; font-weight:600; color:var(--m); text-transform:uppercase; letter-spacing:.04em; margin:12px 0 4px; }
+  label:first-child { margin-top:0; }
+  select, textarea, input[type=file] { width:100%; font:inherit; padding:8px; border:1px solid var(--line); border-radius:6px; background:#fff; }
+  textarea { height:390px; font:13px/1.45 Consolas, "DejaVu Sans Mono", monospace; resize:vertical; }
+  .row { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+  .desc { font-size:12.5px; color:var(--m); margin-top:4px; min-height:18px; }
+  .fmts { display:flex; gap:8px; flex-wrap:wrap; }
+  .fmts label { display:flex; align-items:center; gap:6px; margin:0; padding:8px 14px; border:1px solid var(--line);
+                border-radius:6px; cursor:pointer; font-size:14px; text-transform:none; letter-spacing:0; color:var(--t); font-weight:500; }
+  .fmts input:checked + span { color:var(--p); font-weight:700; }
+  button { font:inherit; font-weight:600; padding:11px 20px; border:0; border-radius:6px; background:var(--p); color:#fff; cursor:pointer; margin-top:14px; }
+  button:disabled { opacity:.5; cursor:wait; }
+  button.sec { background:#fff; color:var(--p); border:1px solid var(--p); margin-left:8px; }
+  #msg { margin-top:10px; font-size:13.5px; min-height:20px; }
+  #msg.err { color:#b42318; }
+  iframe { width:100%; height:720px; border:1px solid var(--line); border-radius:6px; background:#fafafa; }
+  .hint { font-size:12.5px; color:var(--m); }
+  details { margin-top:12px; font-size:13px; color:var(--m); }
+  code { background:var(--bg); padding:1px 4px; border-radius:3px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Markdown in documento</h1>
+  <p>Impaginazione a regole su carta intestata. Nessuna intelligenza artificiale, nessun dato esce da questo computer.</p>
+</header>
+<main>
+  <section class="card">
+    <div class="row">
+      <div>
+        <label for="brand">Marchio</label>
+        <select id="brand"></select>
+      </div>
+      <div>
+        <label for="model">Modello</label>
+        <select id="model"></select>
+      </div>
+    </div>
+    <div class="desc" id="desc"></div>
+
+    <label>Formato</label>
+    <div class="fmts">
+      <label><input type="radio" name="fmt" value="pdf" checked><span>PDF</span></label>
+      <label><input type="radio" name="fmt" value="docx"><span>Word (.docx)</span></label>
+      <label><input type="radio" name="fmt" value="pptx"><span>PowerPoint (.pptx)</span></label>
+    </div>
+
+    <label for="md">Testo markdown (incolla qui)</label>
+    <textarea id="md" spellcheck="false" placeholder="---&#10;title: Titolo del documento&#10;subtitle: Sottotitolo&#10;client: Nome cliente&#10;---&#10;&#10;## Primo capitolo&#10;Testo..."></textarea>
+
+    <label for="file">Oppure carica un file .md</label>
+    <input type="file" id="file" accept=".md,.markdown,.txt">
+
+    <button id="go">Genera e scarica</button>
+    <button id="prev" class="sec">Anteprima PDF</button>
+    <div id="msg"></div>
+
+    <details>
+      <summary>Intestazione opzionale del file (front matter)</summary>
+      <p>In cima al markdown, tra due righe <code>---</code>: <code>title</code>, <code>subtitle</code>, <code>doc_type</code>,
+      <code>date</code>, <code>client</code>, <code>author</code>, <code>version</code>. Se manca <code>title</code>,
+      si usa il primo titolo di livello 1. Se manca la data, si usa quella di oggi.</p>
+    </details>
+  </section>
+
+  <section class="card">
+    <label>Anteprima</label>
+    <iframe id="frame" title="Anteprima PDF"></iframe>
+    <p class="hint">L'anteprima e' disponibile solo per il PDF. Word e PowerPoint si scaricano e si aprono nell'applicazione.</p>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+let BR = [];
+
+async function init() {
+  BR = await (await fetch('/api/brands')).json();
+  $('brand').innerHTML = BR.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
+  const saved = localStorage.getItem('brand'); if (saved && BR.some(b => b.id === saved)) $('brand').value = saved;
+  fillModels();
+}
+function fillModels() {
+  const b = BR.find(x => x.id === $('brand').value); if (!b) return;
+  $('model').innerHTML = b.modelli.map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
+  const saved = localStorage.getItem('model:' + b.id);
+  if (saved && b.modelli.some(m => m.id === saved)) $('model').value = saved;
+  showDesc();
+}
+function showDesc() {
+  const b = BR.find(x => x.id === $('brand').value);
+  const m = b && b.modelli.find(x => x.id === $('model').value);
+  $('desc').textContent = m ? m.descrizione : '';
+  if (b) { localStorage.setItem('brand', b.id); localStorage.setItem('model:' + b.id, $('model').value); }
+}
+$('brand').onchange = fillModels;
+$('model').onchange = showDesc;
+$('file').onchange = async e => { const f = e.target.files[0]; if (f) $('md').value = await f.text(); };
+
+function msg(t, err) { $('msg').textContent = t; $('msg').className = err ? 'err' : ''; }
+
+async function run(fmt, inline) {
+  const fd = new FormData();
+  fd.append('markdown', $('md').value);
+  fd.append('brand', $('brand').value);
+  fd.append('model', $('model').value);
+  fd.append('format', fmt);
+  if (inline) fd.append('inline', '1');
+  $('go').disabled = $('prev').disabled = true; msg('Elaborazione in corso...');
+  try {
+    const r = await fetch('/api/convert', { method: 'POST', body: fd });
+    if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || 'Errore sconosciuto'); }
+    const blob = await r.blob();
+    const name = (r.headers.get('Content-Disposition') || '').match(/filename\*?=(?:UTF-8'')?"?([^";]+)/i);
+    const url = URL.createObjectURL(blob);
+    if (inline) { $('frame').src = url; msg('Anteprima aggiornata.'); }
+    else {
+      const a = document.createElement('a'); a.href = url; a.download = name ? decodeURIComponent(name[1]) : 'documento.' + fmt;
+      a.click(); msg('Fatto: file scaricato.');
+      if (fmt === 'pdf') $('frame').src = url;
+    }
+  } catch (e) { msg(e.message, true); }
+  finally { $('go').disabled = $('prev').disabled = false; }
+}
+$('go').onclick = () => run(document.querySelector('input[name=fmt]:checked').value, false);
+$('prev').onclick = () => run('pdf', true);
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+# Marchi privati con dati societari reali: restano solo sul tuo computer
+templates/*
+!templates/esempio-cliente/
+out/
