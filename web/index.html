@@ -33,14 +33,50 @@
   .hint { font-size:12.5px; color:var(--m); }
   details { margin-top:12px; font-size:13px; color:var(--m); }
   code { background:var(--bg); padding:1px 4px; border-radius:3px; }
+  nav.tabs { display:flex; gap:4px; margin-top:10px; }
+  nav.tabs button { margin:0; padding:7px 16px; background:transparent; color:#fff; border:1px solid rgba(255,255,255,.35); border-radius:6px; font-weight:600; font-size:13.5px; }
+  nav.tabs button.on { background:#fff; color:var(--p); border-color:#fff; }
+  #vista-imp { display:none; grid-template-columns: 250px 1fr; gap:18px; padding:18px 24px; max-width:1400px; margin:0 auto; }
+  @media (max-width: 900px) { #vista-imp { grid-template-columns: 1fr; } }
+  .lista button { display:block; width:100%; text-align:left; margin:0 0 6px; padding:10px 12px; background:#fff; color:var(--t); border:1px solid var(--line); font-weight:600; }
+  .lista button.on { border-color:var(--p); background:#EAF0F7; color:var(--p); }
+  .lista button small { display:block; font-weight:400; color:var(--m); font-size:12px; }
+  input[type=text], input[type=number] { width:100%; font:inherit; padding:8px; border:1px solid var(--line); border-radius:6px; background:#fff; }
+  .g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .g3 { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .g4 { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .g5 { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }
+  @media (max-width: 700px) { .g2,.g3,.g4,.g5 { grid-template-columns:1fr 1fr; } }
+  h2.sez { font-size:15px; margin:22px 0 2px; padding-top:14px; border-top:1px solid var(--line); color:var(--p); }
+  h2.sez:first-of-type { border-top:0; margin-top:0; padding-top:0; }
+  .colore { display:flex; gap:6px; align-items:center; }
+  .colore input[type=color] { width:44px; height:38px; padding:2px; border:1px solid var(--line); border-radius:6px; background:#fff; }
+  .logo-box { display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .logo-box img { max-height:60px; max-width:200px; border:1px dashed var(--line); padding:6px; background:#fafafa; border-radius:6px; }
+  .mod { border:1px solid var(--line); border-radius:8px; margin-top:10px; background:#fafbfc; }
+  .mod > summary { cursor:pointer; padding:10px 12px; font-weight:600; color:var(--t); font-size:14px; }
+  .mod > summary code { margin-left:8px; font-weight:400; }
+  .mod .corpo { padding:2px 14px 14px; }
+  .mod h4 { margin:14px 0 0; font-size:12.5px; color:var(--p); text-transform:uppercase; letter-spacing:.04em; }
+  .chk { display:flex; align-items:center; gap:8px; font-size:14px; text-transform:none; letter-spacing:0; color:var(--t); font-weight:500; margin:12px 0 0; }
+  .chk input { width:auto; }
+  button.piccolo { padding:6px 12px; font-size:13px; margin:10px 8px 0 0; }
+  button.rosso { background:#fff; color:#b42318; border:1px solid #b42318; }
+  .barra { position:sticky; bottom:0; background:#fff; border-top:1px solid var(--line); margin:18px -16px -16px; padding:10px 16px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; border-radius:0 0 8px 8px; }
+  .barra button { margin:0; }
+  #imp-msg { font-size:13.5px; }
+  #imp-msg.err { color:#b42318; }
+  #imp-msg.ok { color:#1a7f37; }
+  .sporco { color:#b54708; font-size:13px; font-weight:600; }
 </style>
 </head>
 <body>
 <header>
   <h1>Markdown in documento</h1>
   <p>Impaginazione a regole su carta intestata. Nessuna intelligenza artificiale, nessun dato esce da questo computer.</p>
+  <nav class="tabs"><button id="tab-converti" class="on">Converti</button><button id="tab-imp">Marchi e modelli</button></nav>
 </header>
-<main>
+<main id="vista-converti">
   <section class="card">
     <div class="row">
       <div>
@@ -86,19 +122,36 @@
   </section>
 </main>
 
+<div id="vista-imp">
+  <aside class="card">
+    <label>Marchi</label>
+    <div class="lista" id="imp-lista"></div>
+    <label for="nuovo-nome">Nuovo marchio</label>
+    <input type="text" id="nuovo-nome" placeholder="Nome del marchio">
+    <label for="nuovo-copia">Parti da</label>
+    <select id="nuovo-copia"></select>
+    <button id="nuovo-crea" class="piccolo">Crea marchio</button>
+    <p class="hint">Il nuovo marchio parte da una copia di quello scelto: poi cambi logo, colori e modelli.</p>
+  </aside>
+
+  <section class="card" id="imp-editor">
+    <p class="hint">Scegli un marchio a sinistra.</p>
+  </section>
+</div>
+
 <script>
 const $ = id => document.getElementById(id);
 let BR = [];
 
 async function init() {
   BR = await (await fetch('/api/brands')).json();
-  $('brand').innerHTML = BR.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
+  $('brand').innerHTML = BR.map(b => `<option value="${esc(b.id)}">${esc(b.nome)}</option>`).join('');
   const saved = localStorage.getItem('brand'); if (saved && BR.some(b => b.id === saved)) $('brand').value = saved;
   fillModels();
 }
 function fillModels() {
   const b = BR.find(x => x.id === $('brand').value); if (!b) return;
-  $('model').innerHTML = b.modelli.map(m => `<option value="${m.id}">${m.nome}</option>`).join('');
+  $('model').innerHTML = b.modelli.map(m => `<option value="${esc(m.id)}">${esc(m.nome)}</option>`).join('');
   const saved = localStorage.getItem('model:' + b.id);
   if (saved && b.modelli.some(m => m.id === saved)) $('model').value = saved;
   showDesc();
@@ -140,6 +193,250 @@ async function run(fmt, inline) {
 }
 $('go').onclick = () => run(document.querySelector('input[name=fmt]:checked').value, false);
 $('prev').onclick = () => run('pdf', true);
+/* ---------- Marchi e modelli ---------- */
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const api = (url, opt = {}) => fetch(url, { ...opt, headers: { 'X-MD2DOC': '1', ...(opt.headers || {}) } });
+async function ok(r) { const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'Errore sconosciuto'); return j; }
+const slugify = t => (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40).replace(/-+$/, '');
+
+let CUR = null;      // marchio in modifica
+let SPORCO = false;
+
+function vista(nome) {
+  $('vista-converti').style.display = nome === 'converti' ? '' : 'none';
+  $('vista-imp').style.display = nome === 'imp' ? 'grid' : 'none';
+  $('tab-converti').classList.toggle('on', nome === 'converti');
+  $('tab-imp').classList.toggle('on', nome === 'imp');
+  if (nome === 'imp') elencoImp(); else init();
+}
+$('tab-converti').onclick = () => { if (!SPORCO || confirm('Ci sono modifiche non salvate. Uscire lo stesso?')) { SPORCO = false; vista('converti'); } };
+$('tab-imp').onclick = () => vista('imp');
+
+function impMsg(t, tipo) { const m = $('imp-msg'); if (m) { m.textContent = t || ''; m.className = tipo || ''; } }
+function segnaSporco() { SPORCO = true; const s = $('imp-sporco'); if (s) s.textContent = 'Modifiche non salvate'; }
+
+async function aggiornaLista() {
+  const brands = await (await fetch('/api/brands')).json();
+  BR = brands;
+  $('imp-lista').innerHTML = brands.map(b =>
+    `<button data-id="${esc(b.id)}" class="${CUR && CUR.id === b.id ? 'on' : ''}">${esc(b.nome)}<small>${esc(b.id)} · ${b.modelli.length} modelli</small></button>`).join('');
+  $('nuovo-copia').innerHTML = brands.map(b => `<option value="${esc(b.id)}">${esc(b.nome)}</option>`).join('');
+  document.querySelectorAll('#imp-lista button').forEach(bt => bt.onclick = () => {
+    if (SPORCO && !confirm('Ci sono modifiche non salvate. Cambiare marchio lo stesso?')) return;
+    apriMarchio(bt.dataset.id);
+  });
+  return brands;
+}
+async function elencoImp(selezione) {
+  const brands = await aggiornaLista();
+  const id = selezione || (CUR && brands.some(b => b.id === CUR.id) ? CUR.id : (brands[0] && brands[0].id));
+  if (id) await apriMarchio(id);
+}
+
+async function apriMarchio(id) {
+  try { CUR = await ok(await api('/api/brand/' + encodeURIComponent(id))); }
+  catch (e) { $('imp-editor').innerHTML = `<p class="err" style="color:#b42318">${esc(e.message)}</p>`; return; }
+  SPORCO = false; disegna();
+  document.querySelectorAll('#imp-lista button').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+}
+
+const campo = (et, id, val, extra = '') => `<div><label for="${id}">${et}</label><input type="text" id="${id}" value="${esc(val)}" ${extra}></div>`;
+const colore = (et, k, val) => `<div><label>${et}</label><div class="colore"><input type="color" data-col="${k}" value="${esc(val)}"><input type="text" data-colt="${k}" value="${esc(val)}" maxlength="7"></div></div>`;
+const num = (et, cls, val, step = '1') => `<div><label>${et}</label><input type="number" class="${cls}" value="${esc(val)}" step="${step}"></div>`;
+
+function htmlModello(id, m) {
+  const p = m.pdf, w = m.docx, s = m.pptx;
+  const mg = (a, cls) => ['Sopra', 'Destra', 'Sotto', 'Sinistra'].map((n, i) => num(n + ' (mm)', cls + ' m' + i, a[i], '1')).join('');
+  return `<details class="mod" data-id="${esc(id)}" open>
+    <summary>${esc(m.nome)} <code>${esc(id)}</code></summary>
+    <div class="corpo">
+      <div class="g2">${campo('Nome del modello', 'mn-' + id, m.nome, 'class="m-nome"')}${campo('Descrizione (facoltativa)', 'md-' + id, m.descrizione, 'class="m-desc"')}</div>
+      <label class="chk"><input type="checkbox" class="m-cop" ${m.copertina ? 'checked' : ''}> Con copertina (e indice nel PDF)</label>
+
+      <h4>PDF</h4>
+      <div class="g4">
+        <div><label>Formato pagina</label><select class="p-dim">${['A4','A3','A5','Letter','Legal'].map(x => `<option ${p.dimensione === x ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
+        ${num('Testo (pt)', 'p-corpo', p.corpo_pt, '0.5')}
+        ${num('Interlinea', 'p-inter', p.interlinea, '0.05')}
+        <div><label>Numeri di pagina</label><label class="chk"><input type="checkbox" class="p-num" ${p.numera_pagine ? 'checked' : ''}> Mostra</label></div>
+      </div>
+      <div class="g4">${mg(p.margini_mm, 'p-mar')}</div>
+
+      <h4>Word</h4>
+      <div class="g5">${num('Testo (pt)', 'w-corpo', w.corpo_pt, '0.5')}${mg(w.margini_mm, 'w-mar')}</div>
+
+      <h4>PowerPoint</h4>
+      <div class="g3">
+        ${num('Testo (pt)', 's-corpo', s.corpo_pt, '1')}
+        <div><label>Una slide per</label><select class="s-liv">
+          <option value="0" ${+s.livello_slide === 0 ? 'selected' : ''}>Automatico</option>
+          <option value="2" ${+s.livello_slide === 2 ? 'selected' : ''}>Titolo di livello 2</option>
+          <option value="1" ${+s.livello_slide === 1 ? 'selected' : ''}>Titolo di livello 1</option></select></div>
+      </div>
+      <button class="piccolo sec" data-az="duplica">Duplica modello</button><button class="piccolo rosso" data-az="elimina">Elimina modello</button>
+    </div></details>`;
+}
+
+function disegna() {
+  const b = CUR, m = b.marchio, c = b.colori, f = b.font;
+  const logoUrl = b.logo_presente ? `/api/brand/${encodeURIComponent(b.id)}/logo?t=${Date.now()}` : '';
+  $('imp-editor').innerHTML = `
+    <h2 class="sez">Identità</h2>
+    <div class="g2">${campo('Nome del marchio', 'f-nome', m.nome)}${campo('Ragione sociale', 'f-rs', m.ragione_sociale)}</div>
+    ${campo('Indirizzo', 'f-ind', m.indirizzo)}
+    <div class="g3">${campo('Partita IVA', 'f-piva', m.piva)}${campo('Codice fiscale', 'f-cf', m.cf)}${campo('REA', 'f-rea', m.rea)}</div>
+    ${campo('Piede di pagina (vuoto = composto dai dati sopra)', 'f-foot', b.footer)}
+
+    <h2 class="sez">Logo</h2>
+    <div class="logo-box">
+      ${logoUrl ? `<img src="${logoUrl}" alt="Logo">` : '<span class="hint">Nessun logo caricato.</span>'}
+      <div><input type="file" id="f-logo" accept="image/png,image/jpeg"><div class="hint">PNG o JPG, massimo 3 MB. Si salva subito.</div></div>
+      <div style="width:150px">${num('Altezza nel documento (mm)', 'f-logoh', b.logo_altezza_mm, '1').replace('class="f-logoh"', 'id="f-logoh"')}</div>
+    </div>
+
+    <h2 class="sez">Colori e font</h2>
+    <div class="g5">${colore('Primario', 'primario', c.primario)}${colore('Secondario', 'secondario', c.secondario)}${colore('Testo', 'testo', c.testo)}${colore('Tenue', 'tenue', c.tenue)}${colore('Sfondo chiaro', 'sfondo_chiaro', c.sfondo_chiaro)}</div>
+    <div class="g3">${campo('Font dei titoli', 'f-ft', f.titoli)}${campo('Font del testo', 'f-fx', f.testo)}${campo('Font del codice', 'f-fm', f.monospazio)}</div>
+    <p class="hint">I font devono essere installati sul computer che genera o apre il file; altrimenti subentra un font di riserva.</p>
+
+    <h2 class="sez">Modelli</h2>
+    <div id="f-modelli">${Object.entries(b.modelli).map(([id, m]) => htmlModello(id, m)).join('')}</div>
+    <div class="g2" style="margin-top:10px;align-items:end"><div>${campo('Nuovo modello: nome', 'nm-nome', '', 'placeholder="Per esempio: Offerta"')}</div><div><button class="piccolo" id="nm-add" style="margin:0">Aggiungi modello</button></div></div>
+
+    <div class="barra">
+      <button id="imp-salva">Salva</button>
+      <select id="imp-prova-mod" style="width:auto">${Object.entries(b.modelli).map(([id, m]) => `<option value="${esc(id)}">${esc(m.nome)}</option>`).join('')}</select>
+      <button id="imp-prova" class="sec" style="margin-left:0">Salva e anteprima</button>
+      <button id="imp-del" class="sec rosso" style="margin-left:auto">Elimina marchio</button>
+      <span id="imp-sporco" class="sporco"></span><span id="imp-msg"></span>
+    </div>
+    <iframe id="imp-frame" title="Anteprima di prova" style="margin-top:14px;display:none"></iframe>`;
+  collega();
+}
+
+function collega() {
+  const ed = $('imp-editor');
+  ed.querySelectorAll('input, select').forEach(el => el.addEventListener('input', segnaSporco));
+  // colore: selettore e testo sincronizzati
+  ed.querySelectorAll('[data-col]').forEach(sel => {
+    const txt = ed.querySelector(`[data-colt="${sel.dataset.col}"]`);
+    sel.addEventListener('input', () => { txt.value = sel.value.toUpperCase(); });
+    txt.addEventListener('input', () => { if (/^#[0-9a-f]{6}$/i.test(txt.value)) sel.value = txt.value; });
+  });
+  $('f-logo').onchange = caricaLogo;
+  $('imp-salva').onclick = () => salva(false);
+  $('imp-prova').onclick = () => salva(true);
+  $('imp-del').onclick = eliminaMarchio;
+  $('nm-add').onclick = aggiungiModello;
+  ed.querySelectorAll('[data-az]').forEach(bt => bt.onclick = () => {
+    const id = bt.closest('.mod').dataset.id;
+    bt.dataset.az === 'duplica' ? duplicaModello(id) : eliminaModello(id);
+  });
+}
+
+function raccogli() {
+  const v = id => $(id).value;
+  const d = {
+    marchio: { nome: v('f-nome'), ragione_sociale: v('f-rs'), indirizzo: v('f-ind'), piva: v('f-piva'), cf: v('f-cf'), rea: v('f-rea') },
+    footer: v('f-foot'), logo_altezza_mm: v('f-logoh'),
+    colori: {}, font: { titoli: v('f-ft'), testo: v('f-fx'), monospazio: v('f-fm') }, modelli: {},
+  };
+  document.querySelectorAll('[data-colt]').forEach(t => d.colori[t.dataset.colt] = t.value.trim());
+  document.querySelectorAll('#f-modelli .mod').forEach(el => {
+    const q = s => el.querySelector(s);
+    const mar = cls => [0, 1, 2, 3].map(i => q(`.${cls}.m${i}`).value);
+    d.modelli[el.dataset.id] = {
+      nome: q('.m-nome').value, descrizione: q('.m-desc').value, copertina: q('.m-cop').checked,
+      pdf: { dimensione: q('.p-dim').value, corpo_pt: q('.p-corpo').value, interlinea: q('.p-inter').value,
+             numera_pagine: q('.p-num').checked, margini_mm: mar('p-mar') },
+      docx: { corpo_pt: q('.w-corpo').value, margini_mm: mar('w-mar') },
+      pptx: { corpo_pt: q('.s-corpo').value, livello_slide: q('.s-liv').value },
+    };
+  });
+  return d;
+}
+
+async function salva(conAnteprima) {
+  impMsg('Salvataggio...');
+  try {
+    const sel = conAnteprima ? $('imp-prova-mod').value : null;
+    CUR = await ok(await api('/api/brand/' + encodeURIComponent(CUR.id), {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(raccogli()) }));
+    SPORCO = false; disegna(); impMsg('Salvato.', 'ok');
+    if (conAnteprima) {
+      if (sel && CUR.modelli[sel]) $('imp-prova-mod').value = sel;
+      impMsg('Salvato. Creo l\'anteprima...', 'ok');
+      const r = await api(`/api/brand/${encodeURIComponent(CUR.id)}/prova?model=${encodeURIComponent($('imp-prova-mod').value)}`);
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Anteprima non riuscita');
+      const fr = $('imp-frame'); fr.style.display = 'block'; fr.src = URL.createObjectURL(await r.blob());
+      impMsg('Salvato. Anteprima aggiornata.', 'ok');
+    }
+    aggiornaLista();
+  } catch (e) { impMsg(e.message, 'err'); }
+}
+
+async function caricaLogo(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const fd = new FormData(); fd.append('logo', f);
+  impMsg('Carico il logo...');
+  try {
+    await ok(await api(`/api/brand/${encodeURIComponent(CUR.id)}/logo`, { method: 'POST', body: fd }));
+    const tieni = SPORCO ? raccogli() : null;
+    CUR = await ok(await api('/api/brand/' + encodeURIComponent(CUR.id)));
+    if (tieni) { Object.assign(CUR, { marchio: tieni.marchio, footer: tieni.footer, colori: tieni.colori, font: tieni.font }); }
+    disegna(); if (tieni) segnaSporco(); impMsg('Logo salvato.', 'ok');
+  } catch (er) { impMsg(er.message, 'err'); e.target.value = ''; }
+}
+
+function aggiungiModello() {
+  const nome = $('nm-nome').value.trim();
+  const id = slugify(nome);
+  if (!id) return impMsg('Scrivi il nome del nuovo modello.', 'err');
+  const dati = raccogli();
+  if (dati.modelli[id]) return impMsg('Esiste già un modello con questo nome.', 'err');
+  const primo = Object.values(dati.modelli)[0];
+  dati.modelli[id] = JSON.parse(JSON.stringify(primo || {})); dati.modelli[id].nome = nome; dati.modelli[id].descrizione = '';
+  rimpiazza(dati);
+}
+function duplicaModello(id) {
+  const dati = raccogli(); let n = id + '-copia', i = 2;
+  while (dati.modelli[n]) n = `${id}-copia-${i++}`;
+  dati.modelli[n] = JSON.parse(JSON.stringify(dati.modelli[id])); dati.modelli[n].nome += ' (copia)';
+  rimpiazza(dati);
+}
+function eliminaModello(id) {
+  const dati = raccogli();
+  if (Object.keys(dati.modelli).length <= 1) return impMsg('Serve almeno un modello.', 'err');
+  if (!confirm(`Eliminare il modello "${dati.modelli[id].nome}"? Si applica quando salvi.`)) return;
+  delete dati.modelli[id]; rimpiazza(dati);
+}
+// ridisegna il modulo con i dati correnti (non ancora salvati), compresi i modelli aggiunti o tolti
+function rimpiazza(dati) {
+  const base = JSON.parse(JSON.stringify(CUR));
+  const completa = m => ({ copertina: false, descrizione: '', pdf: {}, docx: {}, pptx: {}, ...m });
+  CUR = { ...base, marchio: dati.marchio, footer: dati.footer, logo_altezza_mm: dati.logo_altezza_mm, colori: dati.colori, font: dati.font,
+          modelli: Object.fromEntries(Object.entries(dati.modelli).map(([k, m]) => [k, completa(m)])) };
+  disegna(); segnaSporco();
+}
+
+async function creaMarchio() {
+  const nome = $('nuovo-nome').value.trim();
+  if (!nome) return alert('Scrivi il nome del nuovo marchio.');
+  if (SPORCO && !confirm('Ci sono modifiche non salvate. Continuare lo stesso?')) return;
+  try {
+    const r = await ok(await api('/api/brand', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, copia_da: $('nuovo-copia').value }) }));
+    $('nuovo-nome').value = ''; SPORCO = false; await elencoImp(r.id); impMsg('Marchio creato: completa i dati e salva.', 'ok');
+  } catch (e) { alert(e.message); }
+}
+$('nuovo-crea').onclick = creaMarchio;
+
+async function eliminaMarchio() {
+  if (!confirm(`Eliminare il marchio "${CUR.marchio.nome}"?\nLa cartella viene spostata in templates/_eliminati e si può recuperare.`)) return;
+  try { await ok(await api('/api/brand/' + encodeURIComponent(CUR.id), { method: 'DELETE' })); CUR = null; SPORCO = false; await elencoImp(); }
+  catch (e) { impMsg(e.message, 'err'); }
+}
+
 init();
 </script>
 </body>

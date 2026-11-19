@@ -10,14 +10,15 @@ Applicativo locale, senza intelligenza artificiale, che converte file markdown i
 - Dire le cose come stanno, anche se scomode. Meno teoria, piu' sostanza.
 
 ## Architettura
-- `app.py`: interfaccia web locale (Flask, solo 127.0.0.1:5055). Rotte: `/`, `/api/brands`, `/api/convert`.
+- `app.py`: interfaccia web locale (Flask, solo 127.0.0.1:5055). Rotte: `/`, `/api/brands`, `/api/convert`, `/api/brand...` (gestione marchi).
 - `cli.py`: stesso motore da terminale.
 - `engine/config.py`: legge `templates/<marchio>/brand.yaml`, unisce marchio e modello, compone il footer dai dati societari.
 - `engine/parser.py`: markdown-it-py in blocchi (usato da DOCX e PPTX). Front matter YAML opzionale.
 - `engine/pdf.py`: markdown in HTML con CSS `@page`, poi WeasyPrint. Copertina e indice opzionali. Fetcher delle risorse limitato a data:, https: e cartella del marchio.
 - `engine/docx_.py`: python-docx, con riordino degli elementi XML secondo lo schema OOXML (Word e' rigido).
 - `engine/pptx_.py`: python-pptx, slide 16:9 disegnate da zero. H2 = una slide (H1 se non ci sono H2), H1 = slide di sezione, divisione automatica di elenchi e tabelle lunghi.
-- `templates/<marchio>/brand.yaml` + `logo.png`: ogni marchio ha piu' modelli. Aggiungere un marchio = copiare una cartella.
+- `templates/<marchio>/brand.yaml` + `logo.png`: ogni marchio ha piu' modelli. Si gestiscono dalla scheda "Marchi e modelli" dell'app o copiando una cartella.
+- `engine/gestione.py`: lettura, validazione e scrittura dei marchi (crea, salva, logo, elimina in `templates/_eliminati/`). Rotte `/api/brand...` in `app.py`: accettano solo richieste dalla stessa pagina (host locale, Origin, intestazione `X-MD2DOC`).
 - `esempi/prova.md`: markdown di prova con tutti gli elementi.
 
 ## Stato
@@ -30,7 +31,7 @@ I marchi con dati societari reali restano fuori dal repository pubblico: `.gitig
 2. Aprire gli output in Word e PowerPoint reali e correggere eventuali differenze rispetto a LibreOffice.
 3. Provare con 3 o 4 markdown reali generati da IA (relazioni, proposte, offerte) e sistemare i casi che si rompono.
 4. Test automatici minimi (pytest): un markdown per ogni elemento, controllo che i tre formati si generino.
-5. Opzionale: immagini nelle slide, numeri di pagina nell'indice del PDF, schermata per creare un marchio senza modificare il YAML, eseguibile con doppio clic (PyInstaller).
+5. Opzionale: immagini nelle slide, numeri di pagina nell'indice del PDF, eseguibile con doppio clic (PyInstaller). Fatto: schermata per creare marchi e modelli, icona e app per Mac.
 6. Pubblicazione su GitHub (vedi sotto).
 
 ## Pubblicazione su GitHub pubblico

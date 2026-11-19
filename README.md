@@ -26,19 +26,16 @@ I test generano PDF, Word e PowerPoint per ogni elemento markdown (titoli, elenc
 
 ## Marchi e modelli
 
-Ogni marchio e' una cartella in `templates/`:
+Nell'applicazione, scheda **Marchi e modelli**: si crea un marchio (partendo dalla copia di uno esistente), si modificano dati societari, logo, colori e font, si aggiungono, duplicano ed eliminano i modelli, e con "Salva e anteprima" si vede subito un PDF di prova. L'eliminazione di un marchio sposta la cartella in `templates/_eliminati/`, da dove si recupera. Il marchio di esempio e' un normale marchio: per i tuoi dati reali crea un nuovo marchio.
+
+Sotto il cofano ogni marchio e' una cartella in `templates/` e si puo' modificare anche a mano:
 
 ```
 templates/
   mio-marchio/
     brand.yaml     identita', colori, font, modelli
     logo.png
-  cliente-xyz/
-    brand.yaml
-    logo.png
 ```
-
-Per aggiungere un marchio: copia una cartella esistente, cambia logo e `brand.yaml`. Compare da solo nel menu, senza toccare il codice.
 
 Dentro `brand.yaml`:
 
