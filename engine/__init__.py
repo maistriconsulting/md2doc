@@ -15,8 +15,4 @@ def convert(md_text, brand_id, model_id, fmt, nome_base=None):
         from .docx_ import build_docx
         data, slug = build_docx(md_text, prof)
         return data, nome_file(meta, nome_base, slug, "docx"), "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    if fmt == "pptx":
-        from .pptx_ import build_pptx
-        data, slug = build_pptx(md_text, prof)
-        return data, nome_file(meta, nome_base, slug, "pptx"), "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     raise ValueError(f"Formato non supportato: {fmt}")

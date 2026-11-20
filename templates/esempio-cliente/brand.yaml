@@ -34,7 +34,3 @@ modelli:
   proposta:
     nome: Proposta con copertina
     copertina: true
-  presentazione:
-    nome: Presentazione
-    pptx:
-      corpo_pt: 20

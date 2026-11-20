@@ -35,7 +35,7 @@ def test_crea_e_converte(tpl):
     d = gestione.leggi_marchio(nuovo)
     assert d["marchio"]["nome"] == "Studio Verde"
     assert d["marchio"]["piva"] == ""          # i dati del marchio di partenza non si copiano
-    for fmt in ("pdf", "docx", "pptx"):
+    for fmt in ("pdf", "docx"):
         assert len(convert("# Titolo\n\nTesto.", nuovo, "proposta", fmt)[0]) > 1000
 
 

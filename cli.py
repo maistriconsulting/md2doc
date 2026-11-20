@@ -3,11 +3,11 @@ import argparse
 from pathlib import Path
 from engine import convert, list_brands
 
-ap = argparse.ArgumentParser(description="Markdown in PDF / Word / PowerPoint su carta intestata")
+ap = argparse.ArgumentParser(description="Markdown in PDF / Word su carta intestata")
 ap.add_argument("file", nargs="?")
 ap.add_argument("--marchio")
 ap.add_argument("--modello")
-ap.add_argument("--formato", choices=["pdf", "docx", "pptx"], default="pdf")
+ap.add_argument("--formato", choices=["pdf", "docx"], default="pdf")
 ap.add_argument("--out", default=".")
 ap.add_argument("--elenco", action="store_true", help="mostra marchi e modelli disponibili")
 a = ap.parse_args()

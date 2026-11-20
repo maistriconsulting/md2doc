@@ -136,11 +136,11 @@ def _modello(mid, m):
         raise ErroreGestione(f"Identificativo modello non valido: {mid!r} (lettere minuscole, numeri, trattino).")
     if not isinstance(m, dict):
         raise ErroreGestione(f"Modello {mid}: dati non validi.")
-    out = {k: v for k, v in m.items() if k not in ("nome", "descrizione", "copertina", "pdf", "docx", "pptx")}
+    out = {k: v for k, v in m.items() if k not in ("nome", "descrizione", "copertina", "pdf", "docx")}
     out["nome"] = _testo(m.get("nome"), f"Modello {mid}: nome", 60, True)
     out["descrizione"] = _testo(m.get("descrizione"), f"Modello {mid}: descrizione", 120)
     out["copertina"] = bool(m.get("copertina"))
-    p, w, s = (m.get("pdf") or {}), (m.get("docx") or {}), (m.get("pptx") or {})
+    p, w = (m.get("pdf") or {}), (m.get("docx") or {})
     dim = p.get("dimensione", "A4")
     if dim not in DIMENSIONI_PAGINA:
         raise ErroreGestione(f"Modello {mid}: formato pagina non valido.")
@@ -154,11 +154,6 @@ def _modello(mid, m):
     out["docx"] = {
         "margini_mm": _margini(w.get("margini_mm"), f"Modello {mid}: margini Word"),
         "corpo_pt": _numero(w.get("corpo_pt"), f"Modello {mid}: dimensione testo Word", 6, 24),
-    }
-    livello = int(_numero(s.get("livello_slide", 0), f"Modello {mid}: livello slide", 0, 2))
-    out["pptx"] = {
-        "corpo_pt": _numero(s.get("corpo_pt"), f"Modello {mid}: dimensione testo slide", 10, 40),
-        "livello_slide": livello,
     }
     return out
 

@@ -1,4 +1,4 @@
-"""Parser markdown -> modello a blocchi, condiviso da DOCX e PPTX.
+"""Parser markdown -> modello a blocchi, usato da DOCX.
 Il PDF usa direttamente l'HTML di markdown-it."""
 import re
 import yaml

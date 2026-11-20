@@ -97,7 +97,6 @@
     <div class="fmts">
       <label><input type="radio" name="fmt" value="pdf" checked><span>PDF</span></label>
       <label><input type="radio" name="fmt" value="docx"><span>Word (.docx)</span></label>
-      <label><input type="radio" name="fmt" value="pptx"><span>PowerPoint (.pptx)</span></label>
     </div>
 
     <label for="md">Testo markdown (incolla qui)</label>
@@ -121,7 +120,7 @@
   <section class="card">
     <label>Anteprima</label>
     <iframe id="frame" title="Anteprima PDF"></iframe>
-    <p class="hint">L'anteprima e' disponibile solo per il PDF. Word e PowerPoint si scaricano e si aprono nell'applicazione.</p>
+    <p class="hint">L'anteprima e' disponibile solo per il PDF. Word si scarica e si apre nell'applicazione.</p>
   </section>
 </main>
 
@@ -256,7 +255,7 @@ const colore = (et, k, val) => `<div><label>${et}</label><div class="colore"><in
 const num = (et, cls, val, step = '1') => `<div><label>${et}</label><input type="number" class="${cls}" value="${esc(val)}" step="${step}"></div>`;
 
 function htmlModello(id, m) {
-  const p = m.pdf, w = m.docx, s = m.pptx;
+  const p = m.pdf, w = m.docx;
   const mg = (a, cls) => ['Sopra', 'Destra', 'Sotto', 'Sinistra'].map((n, i) => num(n + ' (mm)', cls + ' m' + i, a[i], '1')).join('');
   return `<details class="mod" data-id="${esc(id)}" open>
     <summary>${esc(m.nome)} <code>${esc(id)}</code></summary>
@@ -276,14 +275,6 @@ function htmlModello(id, m) {
       <h4>Word</h4>
       <div class="g5">${num('Testo (pt)', 'w-corpo', w.corpo_pt, '0.5')}${mg(w.margini_mm, 'w-mar')}</div>
 
-      <h4>PowerPoint</h4>
-      <div class="g3">
-        ${num('Testo (pt)', 's-corpo', s.corpo_pt, '1')}
-        <div><label>Una slide per</label><select class="s-liv">
-          <option value="0" ${+s.livello_slide === 0 ? 'selected' : ''}>Automatico</option>
-          <option value="2" ${+s.livello_slide === 2 ? 'selected' : ''}>Titolo di livello 2</option>
-          <option value="1" ${+s.livello_slide === 1 ? 'selected' : ''}>Titolo di livello 1</option></select></div>
-      </div>
       <button class="piccolo sec" data-az="duplica">Duplica modello</button><button class="piccolo rosso" data-az="elimina">Elimina modello</button>
     </div></details>`;
 }
@@ -367,7 +358,6 @@ function raccogli() {
       pdf: { dimensione: q('.p-dim').value, corpo_pt: q('.p-corpo').value, interlinea: q('.p-inter').value,
              numera_pagine: q('.p-num').checked, margini_mm: mar('p-mar') },
       docx: { corpo_pt: q('.w-corpo').value, margini_mm: mar('w-mar') },
-      pptx: { corpo_pt: q('.s-corpo').value, livello_slide: q('.s-liv').value },
     };
   });
   return d;
@@ -440,7 +430,7 @@ function eliminaModello(id) {
 // ridisegna il modulo con i dati correnti (non ancora salvati), compresi i modelli aggiunti o tolti
 function rimpiazza(dati) {
   const base = JSON.parse(JSON.stringify(CUR));
-  const completa = m => ({ copertina: false, descrizione: '', pdf: {}, docx: {}, pptx: {}, ...m });
+  const completa = m => ({ copertina: false, descrizione: '', pdf: {}, docx: {}, ...m });
   CUR = { ...base, marchio: dati.marchio, footer: dati.footer, logo_altezza_mm: dati.logo_altezza_mm, margine_sicurezza_mm: dati.margine_sicurezza_mm, colori: dati.colori, font: dati.font,
           modelli: Object.fromEntries(Object.entries(dati.modelli).map(([k, m]) => [k, completa(m)])) };
   disegna(); segnaSporco();

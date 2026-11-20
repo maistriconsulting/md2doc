@@ -7,7 +7,6 @@ from pathlib import Path
 import pytest
 from docx import Document
 from docx.shared import Mm
-from pptx import Presentation
 
 import app as app_mod
 from engine import config, convert, gestione, pdf
@@ -56,7 +55,7 @@ def test_nome_dal_file_markdown():
     assert nome_file({}, "../../etc/passwd.md", "t", "pdf") == f"passwd_{OGGI}.pdf"
 
 
-@pytest.mark.parametrize("fmt", ["pdf", "docx", "pptx"])
+@pytest.mark.parametrize("fmt", ["pdf", "docx"])
 def test_convert_usa_il_nome_del_markdown(tpl, fmt):
     md = "---\ndate: 2026-11-19\ntitle: Un titolo\n---\n\n# Corpo\n\nTesto."
     _, nome, _ = convert(md, "esempio-cliente", "lettera", fmt, nome_base="relazione-clienti.md")
@@ -151,19 +150,6 @@ def test_docx_intestazione_distanziata(tpl, margine):
     sec = Document(io.BytesIO(data)).sections[0]
     assert abs(sec.header_distance - Mm(margine)) < Mm(0.01)
     assert sec.top_margin >= Mm(margine + 11)
-
-
-@pytest.mark.parametrize("margine", [5, 20])
-def test_pptx_logo_sotto_il_margine(tpl, margine):
-    imposta_margine(tpl, margine)
-    data, _, _ = convert("# T\n\n## Uno\n\n- a\n\n## Due\n\n- b", "esempio-cliente", "presentazione", "pptx")
-    visti = 0
-    for s in Presentation(io.BytesIO(data)).slides:
-        for sh in s.shapes:
-            if sh.shape_type == 13:        # immagine
-                visti += 1
-                assert sh.top >= Mm(margine) - 100
-    assert visti >= 3
 
 
 # ---------- piede di pagina e testo ----------

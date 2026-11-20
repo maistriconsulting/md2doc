@@ -1,18 +1,17 @@
-"""Un markdown per ogni elemento: i tre formati devono generarsi e contenere il testo."""
+"""Un markdown per ogni elemento: i due formati devono generarsi e contenere il testo."""
 import io
 import zipfile
 from pathlib import Path
 
 import pytest
 from docx import Document
-from pptx import Presentation
 
 from engine import convert, list_brands
 from engine.parser import md_instance, parse_markdown
 
 MARCHIO = "esempio-cliente"
-MODELLI = ["lettera", "proposta", "presentazione"]
-FORMATI = ["pdf", "docx", "pptx"]
+MODELLI = ["lettera", "proposta"]
+FORMATI = ["pdf", "docx"]
 
 # nome elemento: (markdown, testo che deve comparire nel documento generato)
 ELEMENTI = {
@@ -43,18 +42,6 @@ def estrai_docx(data):
     return "\n".join(parti)
 
 
-def estrai_pptx(data):
-    out = []
-    for s in Presentation(io.BytesIO(data)).slides:
-        for sh in s.shapes:
-            if sh.has_text_frame:
-                out.append(sh.text_frame.text)
-            if getattr(sh, "has_table", False) and sh.has_table:
-                for r in sh.table.rows:
-                    out += [c.text for c in r.cells]
-    return "\n".join(out)
-
-
 def test_marchio_di_esempio_presente():
     marchi = {b["id"]: [m["id"] for m in b["modelli"]] for b in list_brands()}
     assert MARCHIO in marchi
@@ -74,7 +61,7 @@ def test_elemento_si_genera(nome, modello, fmt):
         assert data[:5] == b"%PDF-"
     else:
         assert zipfile.is_zipfile(io.BytesIO(data))
-        testo = estrai_docx(data) if fmt == "docx" else estrai_pptx(data)
+        testo = estrai_docx(data)
         assert atteso in testo
 
 
@@ -99,12 +86,6 @@ def test_titolo_da_primo_h1():
 def test_formato_non_supportato():
     with pytest.raises(ValueError):
         convert("# a", MARCHIO, "lettera", "xls")
-
-
-def test_pptx_tabella_lunga_su_piu_slide():
-    md, _ = ELEMENTI["tabella_lunga"]
-    data, _, _ = convert(md, MARCHIO, "presentazione", "pptx")
-    assert len(Presentation(io.BytesIO(data)).slides) > 3
 
 
 def test_risorsa_http_bloccata_non_rompe_il_pdf():

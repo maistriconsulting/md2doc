@@ -6,7 +6,7 @@ Struttura:
   brand.yaml -> sezione "modelli":    uno o piu' modelli con le regole di impaginazione
 
 Un modello puo' sovrascrivere qualsiasi chiave del marchio (colori, font, footer)
-e definisce le regole per pdf / docx / pptx.
+e definisce le regole per pdf / docx.
 """
 from pathlib import Path
 import copy
@@ -26,7 +26,6 @@ DEFAULT_MODEL = {
     "pdf": {"margini_mm": [32, 20, 25, 20], "dimensione": "A4", "numera_pagine": True,
             "interlinea": 1.45, "corpo_pt": 10},
     "docx": {"margini_mm": [30, 20, 25, 20], "corpo_pt": 10},
-    "pptx": {"corpo_pt": 18, "livello_slide": 0},
 }
 
 
