@@ -11,6 +11,8 @@ md2doc is a local tool for two jobs:
 
 It uses no AI and makes no external calls. Layout rules are defined once per brand and template, so the same input always produces the same output. The web interface is reachable only from your own computer (127.0.0.1).
 
+![md2doc web interface: Markdown on the left, live PDF preview on the right](docs/interfaccia.jpg)
+
 ## Features
 
 - Output: **PDF** (WeasyPrint) and **Word .docx** (python-docx). PowerPoint is not offered for now: it needs a much more elaborate setup.

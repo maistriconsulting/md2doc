@@ -2,6 +2,8 @@
 
 Trasforma i file markdown (anche quelli generati da un'intelligenza artificiale) in PDF o Word su carta intestata. L'applicativo non usa intelligenza artificiale e non fa chiamate esterne: applica regole di impaginazione definite una volta sola.
 
+![Interfaccia di md2doc: markdown a sinistra, anteprima PDF a destra](docs/interfaccia.jpg)
+
 ## Avvio
 
 - Windows: doppio clic su `avvia.bat`
