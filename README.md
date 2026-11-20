@@ -11,7 +11,7 @@ Alla prima esecuzione installa le librerie (serve Python 3.10 o superiore). Su M
 
 ### Icona su Mac
 
-`./mac/crea-app.sh` crea "MD in documento.app" in `~/Applications`: doppio clic, parte il programma e si apre il browser (si trova anche con Spotlight). Se sposti la cartella del progetto, rilancia lo script. Per fermare il programma: `pkill -f app.py`. Il registro e' in `~/Library/Logs/md2doc.log`.
+`./mac/crea-app.sh` crea "MD in documento.app" in `~/Applications`: doppio clic, parte il programma e si apre il browser (si trova anche con Spotlight). A ogni clic il programma viene riavviato, cosi' usa sempre il codice piu' recente. Se sposti la cartella del progetto, rilancia lo script. Per fermare il programma: `pkill -f app.py`. Il registro e' in `~/Library/Logs/md2doc.log`.
 
 Da terminale: `python cli.py file.md --marchio mio-marchio --modello documento --formato pdf` (con `--elenco` mostra marchi e modelli).
 

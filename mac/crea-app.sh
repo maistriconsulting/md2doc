@@ -31,15 +31,16 @@ cat > "$APP/Contents/MacOS/avvia" <<LAUNCH
 PROG="$PROG"
 URL="http://127.0.0.1:5055"
 LOG="\$HOME/Library/Logs/md2doc.log"
-if ! curl -s -o /dev/null "\$URL/api/brands"; then
-  cd "\$PROG"
-  [ -d /opt/homebrew/lib ] && export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib
-  nohup "\$PROG/.venv/bin/python" app.py >"\$LOG" 2>&1 &
-  for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
-    curl -s -o /dev/null "\$URL/api/brands" && break
-    sleep 0.5
-  done
-fi
+# riparte sempre da zero: cosi' il programma usa sempre il codice e le impostazioni piu' recenti
+OLD="\$(lsof -tiTCP:5055 -sTCP:LISTEN 2>/dev/null)"
+[ -n "\$OLD" ] && kill \$OLD 2>/dev/null && sleep 1
+cd "\$PROG"
+[ -d /opt/homebrew/lib ] && export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib
+nohup "\$PROG/.venv/bin/python" app.py >"\$LOG" 2>&1 &
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+  curl -s -o /dev/null "\$URL/api/brands" && break
+  sleep 0.5
+done
 open "\$URL"
 LAUNCH
 chmod +x "$APP/Contents/MacOS/avvia"
