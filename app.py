@@ -63,6 +63,19 @@ def index():
     return send_file(Path(__file__).with_name("web") / "index.html", mimetype="text/html")
 
 
+@app.get("/favicon.ico")
+@app.get("/apple-touch-icon.png")
+def icona_pagina():
+    """Icona della scheda del browser: file generato da mac/icona.py (se manca, nessuna icona)."""
+    nome = request.path.lstrip("/")
+    f = Path(__file__).with_name("web") / nome
+    if not f.is_file():
+        return "", 404
+    r = send_file(f, mimetype="image/x-icon" if nome.endswith(".ico") else "image/png")
+    r.headers["Cache-Control"] = "no-cache"
+    return r
+
+
 @app.get("/api/brands")
 def brands():
     return jsonify(list_brands())

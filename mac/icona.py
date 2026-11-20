@@ -130,7 +130,39 @@ def forma_mac(img):
     return out.resize((1024, 1024), Image.LANCZOS)
 
 
-finale = forma_mac(disegno())
+BASE = Path(__file__).with_name("icona-base.png")     # disegno fornito dall'utente (facoltativo, non versionato)
+
+
+def disegno_da_base():
+    """Disegno fornito dall'utente al centro di una piastrella chiara."""
+    fondo = Image.new("RGB", (S, S))
+    px = fondo.load()
+    for y in range(S):
+        for x in range(S):
+            t = min(max((x * 0.4 + y * 0.9) / (S * 1.3), 0), 1)
+            px[x, y] = (int(255 - 20 * t), int(255 - 13 * t), int(255 - 4 * t))
+    fondo = fondo.convert("RGBA")
+    art = Image.open(BASE).convert("RGBA")
+    h = int(S * 0.66)
+    art = art.resize((int(art.width * h / art.height), h), Image.LANCZOS)
+    fondo.alpha_composite(art, ((S - art.width) // 2, (S - h) // 2))
+    return fondo
+
+
+def favicon(dest):
+    """favicon.ico + icona 180 px per la pagina web, dal disegno fornito."""
+    art = Image.open(BASE).convert("RGBA")
+    lato = max(art.size)
+    q = Image.new("RGBA", (lato, lato), (0, 0, 0, 0))
+    q.alpha_composite(art, ((lato - art.width) // 2, (lato - art.height) // 2))
+    q.resize((256, 256), Image.LANCZOS).save(dest / "favicon.ico", sizes=[(16, 16), (32, 32), (48, 48), (64, 64)])
+    tile = disegno_da_base().resize((180, 180), Image.LANCZOS).convert("RGB")
+    tile.save(dest / "apple-touch-icon.png")
+
+
+finale = forma_mac(disegno_da_base() if BASE.exists() else disegno())
+if BASE.exists():
+    favicon(Path(__file__).resolve().parent.parent / "web")
 with tempfile.TemporaryDirectory() as t:
     iset = Path(t) / "icona.iconset"
     iset.mkdir()

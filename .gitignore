@@ -5,3 +5,8 @@ __pycache__/
 templates/*
 !templates/esempio-cliente/
 out/
+
+# Icona ricavata da un disegno fornito dall'utente (licenza da verificare prima di pubblicarlo)
+mac/icona-base.png
+web/favicon.ico
+web/apple-touch-icon.png
