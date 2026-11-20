@@ -183,7 +183,12 @@ async function run(fmt, inline) {
   try {
     const r = await fetch('/api/convert', { method: 'POST', body: fd });
     if (!r.ok) { const j = await r.json().catch(() => ({})); throw new Error(j.error || 'Errore sconosciuto'); }
-    if (inline) { $('frame').src = (await r.json()).url; msg('Anteprima aggiornata.'); }
+    if (inline) {
+      // programma ancora in esecuzione con la versione precedente: risponde con il PDF invece dell'indirizzo
+      if ((r.headers.get('Content-Type') || '').includes('application/pdf')) $('frame').src = URL.createObjectURL(await r.blob());
+      else $('frame').src = (await r.json()).url;
+      msg('Anteprima aggiornata.');
+    }
     else {
       const blob = await r.blob();
       const name = (r.headers.get('Content-Disposition') || '').match(/filename\*?=(?:UTF-8'')?"?([^";]+)/i);
@@ -379,7 +384,7 @@ async function salva(conAnteprima) {
       impMsg('Salvato. Creo l\'anteprima...', 'ok');
       const r = await api(`/api/brand/${encodeURIComponent(CUR.id)}/prova?model=${encodeURIComponent($('imp-prova-mod').value)}`);
       if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Anteprima non riuscita');
-      const fr = $('imp-frame'); fr.style.display = 'block'; fr.src = (await r.json()).url;
+      const fr = $('imp-frame'); fr.style.display = 'block'; fr.src = (r.headers.get('Content-Type') || '').includes('application/pdf') ? URL.createObjectURL(await r.blob()) : (await r.json()).url;
       impMsg('Salvato. Anteprima aggiornata.', 'ok');
     }
     aggiornaLista();
@@ -391,7 +396,7 @@ async function soloAnteprima() {
   try {
     const r = await api(`/api/brand/${encodeURIComponent(CUR.id)}/prova?model=${encodeURIComponent($('imp-prova-mod').value)}`);
     if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Anteprima non riuscita');
-    const fr = $('imp-frame'); fr.style.display = 'block'; fr.src = (await r.json()).url; impMsg('Anteprima aggiornata.', 'ok');
+    const fr = $('imp-frame'); fr.style.display = 'block'; fr.src = (r.headers.get('Content-Type') || '').includes('application/pdf') ? URL.createObjectURL(await r.blob()) : (await r.json()).url; impMsg('Anteprima aggiornata.', 'ok');
   } catch (e) { impMsg(e.message, 'err'); }
 }
 
