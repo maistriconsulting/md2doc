@@ -1,64 +1,65 @@
-# MD in documento
+# md2doc
 
-Trasforma i file markdown (anche quelli generati da un'intelligenza artificiale) in PDF, Word o PowerPoint su carta intestata. L'applicativo non usa intelligenza artificiale e non fa chiamate esterne: applica regole di impaginazione definite una volta sola.
+**Turn Markdown, including AI-generated Markdown, into corporate-formatted PDF, Word and PowerPoint documents on your own letterhead.**
 
-## Avvio
+[Italiano](README.it.md)
 
-- Windows: doppio clic su `avvia.bat`
-- Mac o Linux: `./avvia.sh`
+md2doc is a local tool for two jobs:
 
-Alla prima esecuzione installa le librerie (serve Python 3.10 o superiore). Su Mac serve anche Pango per il PDF: `brew install pango`. Poi si apre `http://127.0.0.1:5055`: scegli marchio, modello e formato, incolla il markdown, scarica il file. Raggiungibile solo dal tuo computer.
+- **Formatting AI output.** Reports, proposals and offers written by ChatGPT, Claude or any other assistant arrive as plain `.md`. md2doc applies your company's layout rules and gives you a finished document.
+- **Building complex documents from `.md` files.** Cover page, table of contents, nested lists, tables with repeating headers, quotes, code, links, page numbers and letterhead on every page, from a single Markdown source.
 
-### Icona su Mac
+It uses no AI and makes no external calls. Layout rules are defined once per brand and template, so the same input always produces the same output. The web interface is reachable only from your own computer (127.0.0.1).
 
-`./mac/crea-app.sh` crea "MD in documento.app" in `~/Applications`: doppio clic, parte il programma e si apre il browser (si trova anche con Spotlight). A ogni clic il programma viene riavviato, cosi' usa sempre il codice piu' recente. Se sposti la cartella del progetto, rilancia lo script. Per fermare il programma: `pkill -f app.py`. Il registro e' in `~/Library/Logs/md2doc.log`.
+## Features
 
-Da terminale: `python cli.py file.md --marchio mio-marchio --modello documento --formato pdf` (con `--elenco` mostra marchi e modelli).
+- Output: **PDF** (WeasyPrint), **Word .docx** (python-docx), **PowerPoint .pptx** (python-pptx, 16:9).
+- **Brands and templates:** each brand is a folder with a `brand.yaml` and a logo. One brand can have several templates (for example "report" with a cover page, "letter" without). Colors, fonts, margins, text size and footer can be overridden per template.
+- **Web interface** with a built-in editor for brands and templates and an instant PDF preview, plus a **command-line tool** using the same engine.
+- **Optional YAML front matter** in the Markdown: `title`, `subtitle`, `doc_type`, `date`, `client`, `author`, `version`, `slide_level`.
+- **Slides from headings:** each H2 (or H1 if there are no H2) becomes a slide, H1 becomes a section slide, long lists and tables are split across slides.
+- **Safe by default:** raw HTML in Markdown is not executed, and PDF images are limited to https addresses and the brand folder.
+- **Private brands stay private:** `.gitignore` excludes everything in `templates/` except the fictitious `esempio-cliente` brand.
 
-## Test
+## Quick start
+
+Requires Python 3.10 or newer.
+
+- Windows: double-click `avvia.bat`
+- Mac or Linux: `./avvia.sh`
+
+The first run installs the dependencies. On Mac, PDF output also needs Pango: `brew install pango`. Then open `http://127.0.0.1:5055`, choose brand, template and format, paste your Markdown and download the file.
+
+Command line:
+
+```
+python cli.py file.md --marchio my-brand --modello documento --formato pdf
+python cli.py --elenco     # list brands and templates
+```
+
+On Mac, `./mac/crea-app.sh` creates a double-click app in `~/Applications`.
+
+## Create your own brand
+
+In the **Marchi e modelli** tab, copy the example brand, then edit company data, logo, colors and fonts. Or copy `templates/esempio-cliente` by hand and edit `brand.yaml`. The logo, colors and company data in the example are fictitious.
+
+Fonts named in a brand must be installed on the computer that opens the Word or PowerPoint file, or generates the PDF; otherwise a fallback font is used.
+
+## Tests
 
 ```
 .venv/bin/pip install pytest
 .venv/bin/python -m pytest
 ```
 
-I test generano PDF, Word e PowerPoint per ogni elemento markdown (titoli, elenchi, tabelle, codice, citazioni, front matter) con tutti i modelli del marchio di esempio.
+The tests generate PDF, Word and PowerPoint for every Markdown element with all templates of the example brand.
 
-## Marchi e modelli
+## Limitations
 
-Nell'applicazione, scheda **Marchi e modelli**: si crea un marchio (partendo dalla copia di uno esistente), si modificano dati societari, logo, colori e font, si aggiungono, duplicano ed eliminano i modelli, e con "Salva e anteprima" si vede subito un PDF di prova. L'eliminazione di un marchio sposta la cartella in `templates/_eliminati/`, da dove si recupera. Il marchio di esempio e' un normale marchio: per i tuoi dati reali crea un nuovo marchio.
+- Word and PowerPoint output has been checked visually through LibreOffice, not with Microsoft Office itself.
+- Images in Markdown are not included in PowerPoint slides.
+- The interface and documentation are in Italian; the README is available in both languages.
 
-Sotto il cofano ogni marchio e' una cartella in `templates/` e si puo' modificare anche a mano:
+## License
 
-```
-templates/
-  mio-marchio/
-    brand.yaml     identita', colori, font, modelli
-    logo.png
-```
-
-Dentro `brand.yaml`:
-
-- `marchio`: nome, ragione sociale, indirizzo, P.IVA, C.F., REA (il footer si compone da qui, oppure scrivi `footer:` a mano)
-- `colori`, `font`, `logo`, `logo_altezza_mm`
-- `modelli`: uno o piu' modelli per marchio. Ogni modello puo' attivare la copertina, cambiare margini e dimensione del testo per PDF e Word, dimensione del testo e livello di titolo per le slide, e perfino sovrascrivere colori e font del marchio.
-
-## Intestazione opzionale nel markdown
-
-In cima al file, tra due righe `---`: `title`, `subtitle`, `doc_type`, `date`, `client`, `author`, `version`, `slide_level`. Senza `title` si usa il primo titolo di livello 1. Senza `date` si usa la data di oggi.
-
-## Regole di conversione
-
-- PDF e Word: titoli, elenchi annidati, tabelle (intestazione ripetuta nelle pagine successive), citazioni, codice, collegamenti, numero di pagina e carta intestata su ogni pagina.
-- PowerPoint: copertina automatica; i titoli di secondo livello (o di primo, se non ce ne sono) diventano una slide ciascuno; i titoli di primo livello diventano slide di sezione; contenuti troppo lunghi e tabelle si dividono su piu' slide con "(segue)". Le immagini del markdown non sono incluse nelle slide.
-- L'HTML grezzo dentro il markdown non viene eseguito. Nel PDF le immagini sono ammesse solo da indirizzi https o dalla cartella del marchio.
-
-## Da sapere
-
-- Logo, colori e dati in `esempio-cliente` sono fittizi: copia la cartella, poi sostituisci `logo.png` e i valori in `brand.yaml`. Le cartelle dei marchi reali restano fuori da Git: `.gitignore` esclude tutto in `templates/` tranne `esempio-cliente`.
-- I font indicati devono essere installati sul computer che apre il file (Word e PowerPoint) o che genera il PDF; altrimenti subentra un font di riserva.
-- Sul PDF e' disponibile l'anteprima nel browser; Word e PowerPoint si controllano aprendoli.
-
-## Licenza
-
-MIT, vedi il file `LICENSE`.
+MIT, see [LICENSE](LICENSE).
