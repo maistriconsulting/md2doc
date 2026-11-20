@@ -10,6 +10,7 @@ e definisce le regole per pdf / docx / pptx.
 """
 from pathlib import Path
 import copy
+import re
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -23,8 +24,8 @@ DEFAULT_MODEL = {
     "descrizione": "",
     "copertina": False,
     "pdf": {"margini_mm": [32, 20, 25, 20], "dimensione": "A4", "numera_pagine": True,
-            "interlinea": 1.45, "corpo_pt": 10.5},
-    "docx": {"margini_mm": [30, 20, 25, 20], "corpo_pt": 10.5},
+            "interlinea": 1.45, "corpo_pt": 10},
+    "docx": {"margini_mm": [30, 20, 25, 20], "corpo_pt": 10},
     "pptx": {"corpo_pt": 18, "livello_slide": 0},
 }
 
@@ -99,10 +100,15 @@ def load_profile(brand_id, model_id):
     return prof
 
 
+def _unisci_etichette(testo):
+    """P.IVA, C.F. e REA non vanno a capo separati dal loro numero."""
+    return re.sub(r"(P\.?\s?IVA|C\.\s?F\.|REA)[ \t]+(?=\S)", lambda m: m.group(1) + "\u00a0", testo, flags=re.I)
+
+
 def footer_text(prof):
     """Se non c'e' un footer esplicito, lo compone dai dati societari."""
     if prof["footer"]:
-        return prof["footer"]
+        return _unisci_etichette(prof["footer"])
     m = prof["marchio"]
     parts = [m.get("ragione_sociale") or m.get("nome", ""), m.get("indirizzo", "")]
     ids = []
@@ -110,4 +116,4 @@ def footer_text(prof):
         if m.get(k):
             ids.append(f"{lab} {m[k]}")
     parts.append(" - ".join(ids))
-    return " | ".join(p for p in parts if p)
+    return _unisci_etichette(" | ".join(p for p in parts if p))

@@ -19,6 +19,10 @@ def data_it(d=None):
     return f"{d.day} {MESI[d.month - 1]} {d.year}"
 
 
+# spazio (mm) tra l'ultima riga di testo e la riga orizzontale del piede di pagina
+DISTANZA_PIEDE_MM = 7
+
+
 def _fetcher(allowed_dir):
     """Consente solo data:, https: e file dentro la cartella del marchio."""
     allowed_dir = Path(allowed_dir).resolve()
@@ -45,13 +49,14 @@ def _css(prof):
     s = prof["margine_sicurezza_mm"]
     # il margine superiore deve contenere: distanza dal bordo + logo + riga e spazio sotto
     mt = max(mt, s + prof["logo_altezza_mm"] + 10)
+    mb = max(mb, DISTANZA_PIEDE_MM + 15)      # il piede (2 righe) deve starci sotto la distanza
     return f"""
 @page {{
   size: {m['dimensione']};
   margin: {mt}mm {mr}mm {mb}mm {ml}mm;
   @top-left {{ content: element(hdr); width: 100%; vertical-align: top; }}
-  @bottom-left {{ content: element(ftr); width: 78%; vertical-align: top; }}
-  {"@bottom-right { content: 'Pagina ' counter(page) ' di ' counter(pages); font: 8pt " + f['testo'] + ", sans-serif; color: " + c['tenue'] + "; vertical-align: top; }" if m['numera_pagine'] else ""}
+  @bottom-left {{ content: element(ftr); width: 78%; vertical-align: top; padding-top: {DISTANZA_PIEDE_MM}mm; }}
+  {"@bottom-right { content: 'Pagina ' counter(page) ' di ' counter(pages); font: 8pt " + f['testo'] + ", sans-serif; color: " + c['tenue'] + "; vertical-align: top; padding-top: " + str(DISTANZA_PIEDE_MM) + "mm; }" if m['numera_pagine'] else ""}
 }}
 @page cover {{
   margin: 0;

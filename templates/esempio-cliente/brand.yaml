@@ -29,7 +29,7 @@ modelli:
     nome: Lettera / Nota
     descrizione: Impaginazione compatta
     pdf:
-      corpo_pt: 10.5
+      corpo_pt: 10
       margini_mm: [30, 25, 25, 25]
   proposta:
     nome: Proposta con copertina

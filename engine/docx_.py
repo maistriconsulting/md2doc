@@ -155,6 +155,7 @@ class _Builder:
         sec.page_width, sec.page_height = Mm(210), Mm(297)
         s = self.p["margine_sicurezza_mm"]
         mt = max(mt, s + self.p["logo_altezza_mm"] + 8)
+        mb = max(mb, 25)          # spazio tra testo e piede di pagina
         sec.top_margin, sec.right_margin, sec.bottom_margin, sec.left_margin = Mm(mt), Mm(mr), Mm(mb), Mm(ml)
         sec.header_distance, sec.footer_distance = Mm(s), Mm(10)
         st = d.styles

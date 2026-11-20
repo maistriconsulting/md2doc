@@ -164,3 +164,27 @@ def test_pptx_logo_sotto_il_margine(tpl, margine):
                 visti += 1
                 assert sh.top >= Mm(margine) - 100
     assert visti >= 3
+
+
+# ---------- piede di pagina e testo ----------
+
+def test_piva_resta_unita_al_numero():
+    from engine.config import footer_text
+    prof = {"footer": "", "marchio": {"nome": "X", "ragione_sociale": "X Srl", "indirizzo": "Via A 1",
+                                      "piva": "01234567890", "cf": "ABCDEF12G34H567I", "rea": "VR-1"}}
+    t = footer_text(prof)
+    for etichetta, valore in (("P.IVA", "01234567890"), ("C.F.", "ABCDEF12G34H567I"), ("REA", "VR-1")):
+        assert f"{etichetta} {valore}" in t
+    # vale anche per un piede di pagina scritto a mano
+    assert "P.IVA 123" in footer_text({"footer": "Srl | P.IVA 123", "marchio": {}})
+
+
+def test_distanza_tra_testo_e_piede(tpl):
+    css = pdf._css(config.load_profile("esempio-cliente", "lettera"))
+    assert f"padding-top: {pdf.DISTANZA_PIEDE_MM}mm" in css
+    assert pdf.DISTANZA_PIEDE_MM >= 6
+
+
+def test_testo_del_corpo_predefinito_10pt():
+    assert config.DEFAULT_MODEL["pdf"]["corpo_pt"] == 10
+    assert config.DEFAULT_MODEL["docx"]["corpo_pt"] == 10
